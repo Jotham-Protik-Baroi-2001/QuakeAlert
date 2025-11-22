@@ -22,8 +22,8 @@ export default function EarthquakeFeed({ initialData }: EarthquakeFeedProps) {
   const sortedFeatures = [...initialData.features].sort((a, b) => (b.properties.time || 0) - (a.properties.time || 0));
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="flex-1 flex flex-col">
+      <CardHeader className="flex flex-row items-start justify-between">
         <div className="space-y-1.5">
             <CardTitle className="flex items-center gap-2">
               <Rss className="h-6 w-6" />
@@ -33,27 +33,33 @@ export default function EarthquakeFeed({ initialData }: EarthquakeFeedProps) {
               Live data from the selected USGS feed.
             </CardDescription>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
             <Globe className="h-4 w-4" />
             <span>{initialData.metadata.count} events</span>
         </div>
       </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[450px]">
-          <div className="space-y-6 pr-4">
+      <CardContent className="flex-1 flex flex-col p-0">
+        <ScrollArea className="flex-1">
+          <div className="space-y-2 p-6 pt-0">
             {sortedFeatures.length > 0 ? (
               sortedFeatures.map((feature) => (
-                <div key={feature.id} className="flex items-center justify-between gap-4">
+                <a 
+                  key={feature.id} 
+                  href={feature.properties.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-4 p-3 rounded-lg transition-colors hover:bg-muted/50"
+                >
                   <div 
                     className={cn(
-                        "flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-full font-bold text-lg",
+                        "flex-shrink-0 flex flex-col items-center justify-center w-14 h-14 rounded-full font-bold text-base",
                         getMagnitudeVariant(feature.properties.mag) === 'destructive' && 'bg-destructive text-destructive-foreground',
-                        getMagnitudeVariant(feature.properties.mag) === 'secondary' && 'bg-secondary text-secondary-foreground',
+                        getMagnitudeVariant(feature.properties.mag) === 'secondary' && 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30',
                         getMagnitudeVariant(feature.properties.mag) === 'default' && 'bg-muted text-muted-foreground'
                     )}
                   >
                     <span>{(feature.properties.mag || 0).toFixed(1)}</span>
-                    <span className="text-xs font-medium">M</span>
+                    <span className="text-xs font-medium opacity-80">M</span>
                   </div>
                   <div className="flex-grow min-w-0">
                     <p className="font-medium leading-tight truncate">{feature.properties.place || "Unknown location"}</p>
@@ -61,10 +67,10 @@ export default function EarthquakeFeed({ initialData }: EarthquakeFeedProps) {
                       <TimeAgo time={feature.properties.time} />
                     </p>
                   </div>
-                </div>
+                </a>
               ))
             ) : (
-              <div className="flex items-center justify-center h-full pt-16">
+              <div className="flex items-center justify-center h-full min-h-[200px]">
                 <p className="text-center text-muted-foreground">No recent earthquakes in this feed.</p>
               </div>
             )}

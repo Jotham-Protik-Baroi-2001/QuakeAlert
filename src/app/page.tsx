@@ -67,9 +67,9 @@ export default function Home() {
   }, [currentFeedUrl]);
   
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-muted/20">
       <Header />
-      <main className="flex-1 p-4 md:p-8 container mx-auto">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 container mx-auto">
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
@@ -77,23 +77,25 @@ export default function Home() {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="flex flex-col gap-6">
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Left Column */}
+          <div className="lg:col-span-1 flex flex-col gap-6">
             <SensorStatus />
             <Settings 
                 currentFeedUrl={currentFeedUrl}
                 onFeedSourceChange={setCurrentFeedUrl}
             />
           </div>
-          <div className="flex flex-col gap-6">
+          {/* Right Column */}
+          <div className="lg:col-span-2 flex flex-col">
             {isLoading ? (
-               <Card>
+               <Card className="flex-1">
                 <CardHeader>
                   <Skeleton className="h-6 w-3/5" />
                   <Skeleton className="h-4 w-2/5" />
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-center h-[120px] text-muted-foreground">
+                  <div className="flex items-center justify-center h-[200px] text-muted-foreground">
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                     <span>Loading feed...</span>
                   </div>
