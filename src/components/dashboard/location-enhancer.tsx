@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { countries } from '@/lib/countries';
 import { Label } from '../ui/label';
-import { Separator } from '../ui/separator';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 interface LocationEnhancerProps {
@@ -27,6 +26,19 @@ const getMagnitudeVariant = (mag: number | null): "destructive" | "secondary" | 
     if (magnitude >= 2.5) return "secondary";
     return "default";
 };
+
+// Client-side component to prevent hydration mismatch
+const TimeAgo = ({ time }: { time: number | null }) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted || !time) {
+    return <span>Unknown time</span>;
+  }
+
+  return <span>{formatDistanceToNow(new Date(time), { addSuffix: true })}</span>;
+};
+
 
 export default function LocationEnhancer({ earthquakeDataJSON }: LocationEnhancerProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -197,7 +209,7 @@ export default function LocationEnhancer({ earthquakeDataJSON }: LocationEnhance
                     <div className="flex-grow min-w-0">
                       <p className="font-medium leading-tight truncate">{feature.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        {feature.time ? formatDistanceToNow(new Date(feature.time), { addSuffix: true }) : "Unknown time"}
+                        <TimeAgo time={feature.time} />
                       </p>
                        {feature.proximity_to_user_km != null && (
                          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
