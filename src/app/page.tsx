@@ -39,105 +39,82 @@ export const earthquakeFeedSources = [
   },
 ];
 
-async function getEarthquakeData(
-  url: string
-): Promise<UsgsEarthquakeResponse | null> {
-  try {
-    const res = await fetch(url, {
-      next: { revalidate: 60 }, // Revalidate every minute
-    });
-    if (!res.ok) {
-      console.error('Failed to fetch earthquake data: ', res.statusText);
-      return null;
-    }
-    return res.json();
-  } catch (error) {
-    console.error('Failed to fetch earthquake data:', error);
-    return null;
-  }
-}
-
 export default function Home() {
-  const [earthquakeData, setEarthquakeData] =
-    useState<UsgsEarthquakeResponse | null>(null);
+  const [earthquakeData, setEarthquakeData] = useState<UsgsEarthquakeResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [feedSourceUrl, setFeedSourceUrl] = useState(earthquakeFeedSources[0].url);
-  const [selectedCountry, setSelectedCountry] = useState<Country | undefined>(undefined);
+  const [currentFeedUrl, setCurrentFeedUrl] = useState(earthquakeFeedSources[0].url);
+  const [selectedCountry, setSelectedCountry] = useState<Country | undefined>(countries.find(c => c.name === 'United States'));
+
+  const fetchEarthquakeData = async (url: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data from USGS: ${response.statusText}`);
+      }
+      const data: UsgsEarthquakeResponse = await response.json();
+      setEarthquakeData(data);
+    } catch (err: any) {
+      setError(err.message || "An unknown error occurred.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      setError(null);
-      const data = await getEarthquakeData(feedSourceUrl);
-      if (data) {
-        setEarthquakeData(data);
-      } else {
-        setError(
-          'Could not load earthquake data from the selected source. Please try again later.'
-        );
-      }
-      setIsLoading(false);
-    };
-
-    fetchData();
-  }, [feedSourceUrl]);
-
+    fetchEarthquakeData(currentFeedUrl);
+  }, [currentFeedUrl]);
+  
   const handleCountryChange = (countryName: string) => {
     const country = countries.find(c => c.name === countryName);
     setSelectedCountry(country);
-  };
-
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      );
-    }
-
-    if (error) {
-      return (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      );
-    }
-    
-    if (earthquakeData) {
-      return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="flex flex-col gap-6">
-            <SensorStatus />
-            <Settings
-              currentFeedUrl={feedSourceUrl}
-              onFeedSourceChange={setFeedSourceUrl}
-              selectedCountry={selectedCountry}
-              onCountryChange={handleCountryChange}
-            />
-          </div>
-          <div className="flex flex-col gap-6">
-            <LocationEnhancer
-              earthquakeDataJSON={JSON.stringify(earthquakeData)}
-              selectedCountry={selectedCountry}
-            />
-            <EarthquakeFeed initialData={earthquakeData} />
-          </div>
-        </div>
-      );
-    }
-
-    return null;
   };
 
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1 p-4 md:p-8 container mx-auto">
-        {renderContent()}
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error Fetching Data</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="flex flex-col gap-6">
+            <SensorStatus />
+            <Settings 
+                currentFeedUrl={currentFeedUrl}
+                onFeedSourceChange={setCurrentFeedUrl}
+                selectedCountry={selectedCountry}
+                onCountryChange={handleCountryChange}
+            />
+          </div>
+          <div className="flex flex-col gap-6">
+            {isLoading ? (
+               <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/5" />
+                  <Skeleton className="h-4 w-2/5" />
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center h-[120px] text-muted-foreground">
+                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                    <span>Loading feed...</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : earthquakeData && (
+              <>
+                <LocationEnhancer earthquakeDataJSON={JSON.stringify(earthquakeData)} selectedCountry={selectedCountry} />
+                <EarthquakeFeed initialData={earthquakeData} />
+              </>
+            )}
+          </div>
+        </div>
       </main>
     </div>
   );
