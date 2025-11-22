@@ -1,7 +1,30 @@
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
+# Specifies the version of the App Hosting schema.
+requiredAPIs:
+  - apphosting.googleapis.com
+  - run.googleapis.com
 runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
+# Defines the environment variables that will be available to your application.
+# The value of these variables will be sourced from the .env file.
+# https://firebase.google.com/docs/app-hosting/configure#environment-variables
+env:
+  - variable: GEMINI_API_KEY
+    availability:
+      - BUILD
+      - RUNTIME
+# Specifies the command to run to build your application.
+# This command is run in the root directory of your repository.
+build:
+  # Command to run to build your application
+  run: npm run build
+# Specifies the command to run to start your application.
+# This command is run in the root directory of your repository.
+start:
+  run: npm run start
+# Specifies the version of the App Hosting schema.
+schemaVersion: v1alpha1
