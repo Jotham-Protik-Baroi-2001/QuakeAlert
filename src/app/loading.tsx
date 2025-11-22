@@ -44,16 +44,6 @@ export default function Loading() {
           </div>
           {/* Right Column */}
           <div className="flex flex-col gap-6">
-            {/* Location Enhancer Skeleton */}
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-6 w-2/5" />
-                <Skeleton className="h-4 w-4/5" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-10 w-full" />
-              </CardContent>
-            </Card>
             {/* Earthquake Feed Skeleton */}
             <Card>
               <CardHeader>

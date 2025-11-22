@@ -4,12 +4,10 @@ import { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/header';
 import SensorStatus from '@/components/dashboard/sensor-status';
 import EarthquakeFeed from '@/components/dashboard/earthquake-feed';
-import LocationEnhancer from '@/components/dashboard/location-enhancer';
 import Settings from '@/components/dashboard/settings';
 import type { UsgsEarthquakeResponse } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
-import { Country, countries } from '@/lib/countries';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -46,7 +44,6 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentFeedUrl, setCurrentFeedUrl] = useState(earthquakeFeedSources[0].url);
-  const [selectedCountry, setSelectedCountry] = useState<Country | undefined>(countries.find(c => c.name === 'United States'));
 
   const fetchEarthquakeData = async (url: string) => {
     setIsLoading(true);
@@ -69,11 +66,6 @@ export default function Home() {
     fetchEarthquakeData(currentFeedUrl);
   }, [currentFeedUrl]);
   
-  const handleCountryChange = (countryName: string) => {
-    const country = countries.find(c => c.name === countryName);
-    setSelectedCountry(country);
-  };
-
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -91,8 +83,6 @@ export default function Home() {
             <Settings 
                 currentFeedUrl={currentFeedUrl}
                 onFeedSourceChange={setCurrentFeedUrl}
-                selectedCountry={selectedCountry}
-                onCountryChange={handleCountryChange}
             />
           </div>
           <div className="flex flex-col gap-6">
@@ -110,10 +100,7 @@ export default function Home() {
                 </CardContent>
               </Card>
             ) : earthquakeData && (
-              <>
-                <LocationEnhancer earthquakeDataJSON={JSON.stringify(earthquakeData)} selectedCountry={selectedCountry} />
-                <EarthquakeFeed initialData={earthquakeData} />
-              </>
+              <EarthquakeFeed initialData={earthquakeData} />
             )}
           </div>
         </div>
