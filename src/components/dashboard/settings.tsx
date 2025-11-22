@@ -6,17 +6,25 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { SlidersHorizontal, Bell, Vibrate, Rss } from 'lucide-react';
+import { SlidersHorizontal, Bell, Vibrate, Rss, Globe } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { earthquakeFeedSources } from '@/app/page';
+import { countries } from '@/lib/countries';
 
 interface SettingsProps {
   currentFeedUrl: string;
   onFeedSourceChange: (newUrl: string) => void;
+  selectedCountry?: string;
+  onCountryChange: (country?: string) => void;
 }
 
-export default function Settings({ currentFeedUrl, onFeedSourceChange }: SettingsProps) {
+export default function Settings({ 
+  currentFeedUrl, 
+  onFeedSourceChange,
+  selectedCountry,
+  onCountryChange
+}: SettingsProps) {
   const [sensitivity, setSensitivity] = useState(50);
   const { toast } = useToast();
 
@@ -31,7 +39,15 @@ export default function Settings({ currentFeedUrl, onFeedSourceChange }: Setting
     onFeedSourceChange(newUrl);
     toast({
         title: "Feed source updated",
-        description: "The earthquake feed has been updated to the new source."
+        description: "The earthquake feed has been updated."
+    })
+  }
+
+  const handleCountryChange = (country?: string) => {
+    onCountryChange(country === 'all' ? undefined : country);
+    toast({
+        title: "Location updated",
+        description: country && country !== 'all' ? `Feed filtered for ${country}.` : 'Feed showing all locations.'
     })
   }
 
@@ -58,6 +74,28 @@ export default function Settings({ currentFeedUrl, onFeedSourceChange }: Setting
               {earthquakeFeedSources.map(source => (
                 <SelectItem key={source.id} value={source.url}>
                   {source.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-4">
+          <Label htmlFor="country-select" className="font-medium flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            Filter by Country
+          </Label>
+          <Select value={selectedCountry || 'all'} onValueChange={handleCountryChange}>
+            <SelectTrigger id="country-select">
+              <SelectValue placeholder="Select a country" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                All Countries
+              </SelectItem>
+              {countries.map(country => (
+                <SelectItem key={country.name} value={country.name}>
+                  {country.name}
                 </SelectItem>
               ))}
             </SelectContent>
