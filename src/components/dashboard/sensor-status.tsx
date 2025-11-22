@@ -6,15 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Zap, Activity, Server } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
-const SENSOR_THRESHOLD = 5; // m/s^2, a significant shake
 const SENSOR_SENSITIVITY_MULTIPLIER = 10; 
 
 // Type definition for LinearAccelerationSensor
-interface Sensor {
+interface Sensor extends EventTarget {
   start: () => void;
   stop: () => void;
-  addEventListener: (event: 'reading' | 'error', listener: () => void) => void;
-  removeEventListener: (event: 'reading' | 'error', listener: () => void) => void;
   x: number | null;
   y: number | null;
   z: number | null;
@@ -23,7 +20,7 @@ interface Sensor {
 declare global {
   interface Window {
     LinearAccelerationSensor?: {
-      new (options: any): Sensor;
+      new (options?: any): Sensor;
     };
   }
 }
@@ -39,9 +36,13 @@ export default function SensorStatus() {
   const sensorRef = useRef<Sensor | null>(null);
 
   useEffect(() => {
-    // Check for sensor availability on the client
+    // This effect runs only on the client
     if ('LinearAccelerationSensor' in window) {
       setIsSensorAvailable(true);
+      setSensorMode('real');
+    } else {
+      setIsSensorAvailable(false);
+      setSensorMode('simulated');
     }
   }, []);
 
@@ -54,7 +55,7 @@ export default function SensorStatus() {
     const level = Math.min(100, magnitude * SENSOR_SENSITIVITY_MULTIPLIER);
     setTremorLevel(level);
 
-    if (level > 75) {
+    if (level > 75) { // Corresponds to a significant shake
       setIsTremorDetected(true);
     } else {
       setIsTremorDetected(false);
@@ -62,6 +63,8 @@ export default function SensorStatus() {
   };
 
   const startSimulation = () => {
+    stopMonitoring(); // Ensure no other process is running
+    setSensorMode('simulated');
     simulationIntervalRef.current = setInterval(() => {
       const randomSpike = Math.random();
       let level = 0;
@@ -80,33 +83,34 @@ export default function SensorStatus() {
   };
   
   const startRealSensor = async () => {
+    stopMonitoring(); // Ensure no other process is running
+    setSensorMode('real');
     try {
-      if (!('permissions' in navigator)) {
-        throw new Error('Permissions API not supported');
-      }
-      // @ts-ignore - name is a valid property for permissions.query
-      const permissionStatus = await navigator.permissions.query({ name: 'accelerometer' });
+        if (!window.LinearAccelerationSensor) {
+            throw new Error('Sensor not available');
+        }
+        // @ts-ignore - name is a valid property
+        const permissionStatus = await navigator.permissions.query({ name: 'accelerometer' });
 
-      if (permissionStatus.state === 'granted') {
-        const sensor = new window.LinearAccelerationSensor!({ frequency: 60 });
-        sensor.addEventListener('reading', handleSensorReading);
-        sensor.addEventListener('error', () => {
-          console.error('Sensor error. Falling back to simulation.');
-          setSensorMode('simulated');
-          startSimulation();
-        });
-        sensor.start();
-        sensorRef.current = sensor;
-        setSensorMode('real');
-      } else {
-        console.warn('Sensor permission not granted. Using simulation.');
-        setSensorMode('simulated');
-        startSimulation();
-      }
+        if (permissionStatus.state === 'granted') {
+            const sensor = new window.LinearAccelerationSensor({ frequency: 10 });
+            sensor.addEventListener('reading', handleSensorReading);
+            sensor.addEventListener('error', (event: any) => {
+                console.error('Sensor error:', event.error.name, event.error.message);
+                // Fallback to simulation if the real sensor fails
+                startSimulation();
+            });
+            sensor.start();
+            sensorRef.current = sensor;
+        } else {
+            console.warn('Permission for accelerometer not granted.');
+            // If permission is not granted, fall back to simulation.
+            startSimulation();
+        }
     } catch (error) {
-      console.error('Failed to initialize sensor, falling back to simulation:', error);
-      setSensorMode('simulated');
-      startSimulation();
+        console.error('Failed to initialize real sensor:', error);
+        // Fallback to simulation on any error
+        startSimulation();
     }
   };
 
@@ -137,12 +141,18 @@ export default function SensorStatus() {
     setIsTremorDetected(false);
   };
 
+  // Cleanup effect
   useEffect(() => {
     return () => {
-      // Cleanup on unmount
       stopMonitoring();
     };
   }, []);
+
+  const getStatusText = () => {
+    if (!isMonitoring) return 'Inactive';
+    if (isTremorDetected) return 'Tremor Detected!';
+    return 'Monitoring...';
+  }
 
   return (
     <Card>
@@ -152,10 +162,10 @@ export default function SensorStatus() {
           Device Sensor
         </CardTitle>
         <CardDescription>
-          {isSensorAvailable 
-            ? 'Using real device accelerometer data for tremor detection.'
+            {isSensorAvailable && sensorMode === 'real'
+            ? 'Using real device accelerometer data.'
             : 'Simulating accelerometer data for tremor detection.'
-          }
+            }
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -163,9 +173,7 @@ export default function SensorStatus() {
           <div className="flex items-center gap-3">
             <div className={`w-3 h-3 rounded-full transition-colors ${isMonitoring ? (isTremorDetected ? 'bg-destructive animate-pulse' : 'bg-primary') : 'bg-muted-foreground'}`} />
             <div>
-              <p className="font-semibold">
-                {isMonitoring ? (isTremorDetected ? 'Tremor Detected!' : 'Monitoring...') : 'Inactive'}
-              </p>
+              <p className="font-semibold">{getStatusText()}</p>
               <p className="text-sm text-muted-foreground">Status</p>
             </div>
           </div>
@@ -187,8 +195,8 @@ export default function SensorStatus() {
         </Button>
         <p className="text-xs text-center text-muted-foreground">
             {isSensorAvailable 
-              ? 'This uses your device motion sensors. No data is stored.'
-              : 'This simulates integration with broader alert services.'
+              ? 'This feature uses your device motion sensors.'
+              : 'Your device does not support the required motion sensors.'
             }
         </p>
       </CardContent>
