@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Zap, Activity } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 
 const SENSOR_SENSITIVITY_MULTIPLIER = 10; 
 
@@ -59,10 +60,10 @@ export default function SensorStatus() {
     // This effect runs only on the client to determine sensor availability.
     if ('LinearAccelerationSensor' in window) {
       setSensorMode('real');
-      setSensorStatusMessage('Using real device accelerometer.');
+      setSensorStatusMessage('Device accelerometer is available.');
     } else {
       setSensorMode('unavailable');
-      setSensorStatusMessage('Simulating data. Your device does not have the required sensors.');
+      setSensorStatusMessage('Your device does not have the required motion sensors.');
     }
   }, []);
 
@@ -83,8 +84,10 @@ export default function SensorStatus() {
   };
 
   const startSimulation = () => {
-    setSensorMode('simulated');
-    setSensorStatusMessage('Simulating accelerometer data for tremor detection.');
+    if (sensorMode !== 'unavailable') {
+        setSensorMode('simulated');
+        setSensorStatusMessage('Simulating accelerometer data for tremor detection.');
+    }
     simulationIntervalRef.current = setInterval(() => {
       const randomSpike = Math.random();
       let level = 0;
@@ -120,7 +123,6 @@ export default function SensorStatus() {
                 setSensorStatusMessage('Sensor could not be read. Falling back to simulation.');
             } else {
                 setSensorStatusMessage('A sensor error occurred. Falling back to simulation.');
-                console.error('Sensor error:', event.error.name, event.error.message);
             }
             // Stop the failing sensor and switch to simulation
             if (isMonitoring) {
@@ -136,12 +138,12 @@ export default function SensorStatus() {
 
     } catch (error) {
         setSensorStatusMessage('Failed to initialize sensor. Falling back to simulation.');
-        console.error('Failed to initialize real sensor:', error);
         startSimulation();
     }
   };
 
   const startMonitoring = () => {
+    if (sensorMode === 'unavailable') return;
     setIsMonitoring(true);
     if (sensorMode === 'real') {
       startRealSensor();
@@ -166,10 +168,11 @@ export default function SensorStatus() {
 
     setTremorLevel(0);
     setIsTremorDetected(false);
-    if (sensorMode === 'unavailable') {
-        setSensorStatusMessage('Simulating data. Your device does not have the required sensors.');
-    } else {
-        setSensorStatusMessage('Using real device accelerometer.');
+    if (sensorMode === 'real') {
+      setSensorStatusMessage('Device accelerometer is available.');
+    } else if (sensorMode === 'simulated') {
+      setSensorStatusMessage('Simulation stopped. Ready to use real sensor.');
+      setSensorMode('real'); // Revert to real mode possibility
     }
   };
 
@@ -178,16 +181,18 @@ export default function SensorStatus() {
     return () => {
       stopMonitoring();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getStatusText = () => {
+    if (sensorMode === 'unavailable') return 'Unavailable';
     if (!isMonitoring) return 'Inactive';
     if (isTremorDetected) return 'Tremor Detected!';
     return 'Monitoring...';
   }
 
   return (
-    <Card>
+    <Card className={cn(sensorMode === 'unavailable' && 'opacity-60')}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Activity className="h-6 w-6" />
@@ -219,13 +224,13 @@ export default function SensorStatus() {
             <Progress value={tremorLevel} className={isTremorDetected ? '[&>div]:bg-destructive' : ''} />
         </div>
 
-        <Button onClick={isMonitoring ? stopMonitoring : startMonitoring} className="w-full" disabled={sensorMode === 'unavailable' && !isMonitoring}>
+        <Button onClick={isMonitoring ? stopMonitoring : startMonitoring} className="w-full" disabled={sensorMode === 'unavailable'}>
           {isMonitoring ? 'Stop Monitoring' : 'Start Monitoring'}
         </Button>
         <p className="text-xs text-center text-muted-foreground">
-            {sensorMode === 'unavailable' 
-              ? 'Your device does not support the required motion sensors.'
-              : 'This feature uses your device motion sensors if available.'
+            {sensorMode !== 'unavailable' 
+              ? 'This feature uses your device motion sensors if available.'
+              : ''
             }
         </p>
       </CardContent>
