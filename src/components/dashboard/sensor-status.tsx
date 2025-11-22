@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, Activity, Database } from 'lucide-react';
+import { Zap, Activity } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 const SENSOR_SENSITIVITY_MULTIPLIER = 10; 
@@ -24,6 +24,26 @@ declare global {
     };
   }
 }
+
+// Inline SVG to replace the problematic lucide-react icon
+const DatabaseIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <ellipse cx="12" cy="5" rx="9" ry="3" />
+      <path d="M3 5V19A9 3 0 0 0 21 19V5" />
+      <path d="M3 12A9 3 0 0 0 21 12" />
+    </svg>
+  );
 
 export default function SensorStatus() {
   const [isMonitoring, setIsMonitoring] = useState(false);
@@ -180,7 +200,7 @@ export default function SensorStatus() {
            {isMonitoring && (
             <div className='flex items-center gap-2'>
               {isTremorDetected && <Zap className="h-6 w-6 text-destructive animate-ping" />}
-              {sensorMode === 'simulated' && <Database className="h-5 w-5 text-muted-foreground" title="Simulated Data" />}
+              {sensorMode === 'simulated' && <DatabaseIcon className="h-5 w-5 text-muted-foreground" title="Simulated Data" />}
             </div>
            )}
         </div>
