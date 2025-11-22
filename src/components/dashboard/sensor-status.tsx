@@ -49,20 +49,20 @@ export default function SensorStatus() {
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [tremorLevel, setTremorLevel] = useState(0);
   const [isTremorDetected, setIsTremorDetected] = useState(false);
-  const [sensorMode, setSensorMode] = useState<'simulated' | 'real'>('simulated');
-  const [isSensorAvailable, setIsSensorAvailable] = useState(false);
+  const [sensorMode, setSensorMode] = useState<'simulated' | 'real' | 'unavailable'>('unavailable');
+  const [sensorStatusMessage, setSensorStatusMessage] = useState('Checking for device sensors...');
   
   const simulationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const sensorRef = useRef<Sensor | null>(null);
 
   useEffect(() => {
-    // This effect runs only on the client
+    // This effect runs only on the client to determine sensor availability.
     if ('LinearAccelerationSensor' in window) {
-      setIsSensorAvailable(true);
       setSensorMode('real');
+      setSensorStatusMessage('Using real device accelerometer.');
     } else {
-      setIsSensorAvailable(false);
-      setSensorMode('simulated');
+      setSensorMode('unavailable');
+      setSensorStatusMessage('Simulating data. Your device does not have the required sensors.');
     }
   }, []);
 
@@ -83,8 +83,8 @@ export default function SensorStatus() {
   };
 
   const startSimulation = () => {
-    stopMonitoring(); // Ensure no other process is running
     setSensorMode('simulated');
+    setSensorStatusMessage('Simulating accelerometer data for tremor detection.');
     simulationIntervalRef.current = setInterval(() => {
       const randomSpike = Math.random();
       let level = 0;
@@ -103,40 +103,47 @@ export default function SensorStatus() {
   };
   
   const startRealSensor = async () => {
-    stopMonitoring(); // Ensure no other process is running
-    setSensorMode('real');
     try {
-        if (!window.LinearAccelerationSensor) {
-            throw new Error('Sensor not available');
-        }
         // @ts-ignore - name is a valid property
         const permissionStatus = await navigator.permissions.query({ name: 'accelerometer' });
 
-        if (permissionStatus.state === 'granted') {
-            const sensor = new window.LinearAccelerationSensor({ frequency: 10 });
-            sensor.addEventListener('reading', handleSensorReading);
-            sensor.addEventListener('error', (event: any) => {
-                console.error('Sensor error:', event.error.name, event.error.message);
-                // Fallback to simulation if the real sensor fails
-                startSimulation();
-            });
-            sensor.start();
-            sensorRef.current = sensor;
-        } else {
-            console.warn('Permission for accelerometer not granted.');
-            // If permission is not granted, fall back to simulation.
+        if (permissionStatus.state === 'denied') {
+            setSensorStatusMessage('Permission to accelerometer denied. Falling back to simulation.');
             startSimulation();
+            return;
         }
+
+        const sensor = new window.LinearAccelerationSensor!({ frequency: 10 });
+        sensor.addEventListener('reading', handleSensorReading);
+        sensor.addEventListener('error', (event: any) => {
+            if (event.error.name === 'NotReadableError') {
+                setSensorStatusMessage('Sensor could not be read. Falling back to simulation.');
+            } else {
+                setSensorStatusMessage('A sensor error occurred. Falling back to simulation.');
+                console.error('Sensor error:', event.error.name, event.error.message);
+            }
+            // Stop the failing sensor and switch to simulation
+            if (isMonitoring) {
+              stopMonitoring();
+              setIsMonitoring(true); // Keep monitoring state active
+              startSimulation();
+            }
+        });
+        sensor.start();
+        sensorRef.current = sensor;
+        setSensorMode('real');
+        setSensorStatusMessage('Using real device accelerometer.');
+
     } catch (error) {
+        setSensorStatusMessage('Failed to initialize sensor. Falling back to simulation.');
         console.error('Failed to initialize real sensor:', error);
-        // Fallback to simulation on any error
         startSimulation();
     }
   };
 
   const startMonitoring = () => {
     setIsMonitoring(true);
-    if (isSensorAvailable) {
+    if (sensorMode === 'real') {
       startRealSensor();
     } else {
       startSimulation();
@@ -159,6 +166,11 @@ export default function SensorStatus() {
 
     setTremorLevel(0);
     setIsTremorDetected(false);
+    if (sensorMode === 'unavailable') {
+        setSensorStatusMessage('Simulating data. Your device does not have the required sensors.');
+    } else {
+        setSensorStatusMessage('Using real device accelerometer.');
+    }
   };
 
   // Cleanup effect
@@ -182,10 +194,7 @@ export default function SensorStatus() {
           Device Sensor
         </CardTitle>
         <CardDescription>
-            {isSensorAvailable && sensorMode === 'real'
-            ? 'Using real device accelerometer data.'
-            : 'Simulating accelerometer data for tremor detection.'
-            }
+            {sensorStatusMessage}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -210,13 +219,13 @@ export default function SensorStatus() {
             <Progress value={tremorLevel} className={isTremorDetected ? '[&>div]:bg-destructive' : ''} />
         </div>
 
-        <Button onClick={isMonitoring ? stopMonitoring : startMonitoring} className="w-full">
+        <Button onClick={isMonitoring ? stopMonitoring : startMonitoring} className="w-full" disabled={sensorMode === 'unavailable' && !isMonitoring}>
           {isMonitoring ? 'Stop Monitoring' : 'Start Monitoring'}
         </Button>
         <p className="text-xs text-center text-muted-foreground">
-            {isSensorAvailable 
-              ? 'This feature uses your device motion sensors.'
-              : 'Your device does not support the required motion sensors.'
+            {sensorMode === 'unavailable' 
+              ? 'Your device does not support the required motion sensors.'
+              : 'This feature uses your device motion sensors if available.'
             }
         </p>
       </CardContent>
