@@ -2,7 +2,7 @@
 
 import type { UsgsEarthquakeResponse } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Rss, Globe } from "lucide-react";
+import { Rss, Globe, Building } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -60,6 +60,14 @@ export default function EarthquakeFeed({ initialData }: EarthquakeFeedProps) {
                     <p className="text-sm text-muted-foreground">
                       {feature.properties.time ? formatDistanceToNow(new Date(feature.properties.time), { addSuffix: true }) : "Unknown time"}
                     </p>
+                    {/* @ts-ignore */}
+                    {feature.properties.proximity_to_user_km != null && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <Building className="h-3 w-3" />
+                        {/* @ts-ignore */}
+                        {Math.round(feature.properties.proximity_to_user_km).toLocaleString()} km away
+                      </p>
+                    )}
                   </div>
                 </div>
               ))
