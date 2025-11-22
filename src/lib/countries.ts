@@ -1,4 +1,10 @@
-export const countries = [
+export interface Country {
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
+export const countries: Country[] = [
   { name: 'Afghanistan', latitude: 33.93911, longitude: 67.709953 },
   { name: 'Albania', latitude: 41.153332, longitude: 20.168331 },
   { name: 'Algeria', latitude: 28.033886, longitude: 1.659626 },

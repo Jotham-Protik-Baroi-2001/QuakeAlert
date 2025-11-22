@@ -6,17 +6,20 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { SlidersHorizontal, Bell, Vibrate, Rss } from 'lucide-react';
+import { SlidersHorizontal, Bell, Vibrate, Rss, Globe } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { earthquakeFeedSources } from '@/app/page';
+import { countries, Country } from '@/lib/countries';
 
 interface SettingsProps {
   currentFeedUrl: string;
   onFeedSourceChange: (newUrl: string) => void;
+  selectedCountry?: Country;
+  onCountryChange: (countryName: string) => void;
 }
 
-export default function Settings({ currentFeedUrl, onFeedSourceChange }: SettingsProps) {
+export default function Settings({ currentFeedUrl, onFeedSourceChange, selectedCountry, onCountryChange }: SettingsProps) {
   const [sensitivity, setSensitivity] = useState(50);
   const { toast } = useToast();
 
@@ -32,6 +35,14 @@ export default function Settings({ currentFeedUrl, onFeedSourceChange }: Setting
     toast({
         title: "Feed source updated",
         description: "The earthquake feed has been updated to the new source."
+    })
+  }
+
+  const handleCountryChange = (countryName: string) => {
+    onCountryChange(countryName);
+     toast({
+        title: "Country updated",
+        description: `Analysis location set to ${countryName}.`
     })
   }
 
@@ -63,6 +74,25 @@ export default function Settings({ currentFeedUrl, onFeedSourceChange }: Setting
             </SelectContent>
           </Select>
         </div>
+        
+        <div className="space-y-4">
+            <Label htmlFor="country-select" className="font-medium flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                Analysis Country
+            </Label>
+            <Select value={selectedCountry?.name} onValueChange={handleCountryChange}>
+              <SelectTrigger id="country-select">
+                <SelectValue placeholder="Select a country for analysis" />
+              </SelectTrigger>
+              <SelectContent>
+                {countries.map(country => (
+                  <SelectItem key={country.name} value={country.name}>
+                    {country.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
         <Separator />
       

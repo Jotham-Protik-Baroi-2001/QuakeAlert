@@ -8,14 +8,14 @@ import { getLocationEnrichedEarthquakeData, LocationEnrichedEarthquakeDataOutput
 import { MapPin, Loader2, Sparkles, Building, Globe } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from "@/lib/utils";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { countries } from '@/lib/countries';
 import { Label } from '../ui/label';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { TimeAgo } from "@/components/shared/time-ago";
+import type { Country } from '@/lib/countries';
 
 interface LocationEnhancerProps {
   earthquakeDataJSON: string;
+  selectedCountry?: Country;
 }
 
 type AnalysisMode = "geolocation" | "country";
@@ -27,10 +27,9 @@ const getMagnitudeVariant = (mag: number | null): "destructive" | "secondary" | 
     return "default";
 };
 
-export default function LocationEnhancer({ earthquakeDataJSON }: LocationEnhancerProps) {
+export default function LocationEnhancer({ earthquakeDataJSON, selectedCountry }: LocationEnhancerProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState<LocationEnrichedEarthquakeDataOutput | null>(null);
-  const [selectedCountry, setSelectedCountry] = useState<string | undefined>(undefined);
   const [analysisMode, setAnalysisMode] = useState<AnalysisMode>("geolocation");
   const { toast } = useToast();
 
@@ -46,23 +45,13 @@ export default function LocationEnhancer({ earthquakeDataJSON }: LocationEnhance
         toast({
           variant: "destructive",
           title: "Country not selected",
-          description: "Please select a country for analysis.",
+          description: "Please select a country from the Configuration settings.",
         });
         setIsLoading(false);
         return;
       }
-      const countryData = countries.find(c => c.name === selectedCountry);
-      if (!countryData) {
-        toast({
-          variant: "destructive",
-          title: "Invalid Country",
-          description: "Could not find coordinates for the selected country.",
-        });
-        setIsLoading(false);
-        return;
-      }
-      latitude = countryData.latitude;
-      longitude = countryData.longitude;
+      latitude = selectedCountry.latitude;
+      longitude = selectedCountry.longitude;
       processRequest(latitude, longitude);
     } else { // geolocation
       if (!navigator.geolocation) {
@@ -131,7 +120,7 @@ export default function LocationEnhancer({ earthquakeDataJSON }: LocationEnhance
           <Sparkles className="h-6 w-6 text-primary" />
           AI-Powered Analysis
         </CardTitle>
-        <CardDescription>Use your location or select a country for a personalized seismic summary.</CardDescription>
+        <CardDescription>Use your location or the selected country for a personalized seismic summary.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
 
@@ -154,20 +143,12 @@ export default function LocationEnhancer({ earthquakeDataJSON }: LocationEnhance
         </RadioGroup>
 
         {analysisMode === 'country' && (
-          <div className="space-y-2">
-            <Label htmlFor="country-select">Country</Label>
-            <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-              <SelectTrigger id="country-select">
-                <SelectValue placeholder="Select a country" />
-              </SelectTrigger>
-              <SelectContent>
-                {countries.map(country => (
-                  <SelectItem key={country.name} value={country.name}>
-                    {country.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="p-3 bg-muted/50 rounded-lg text-center text-sm">
+            {selectedCountry ? (
+              <p>Analyzing for: <span className="font-semibold">{selectedCountry.name}</span></p>
+            ) : (
+              <p className='text-muted-foreground'>Select a country in the Configuration card.</p>
+            )}
           </div>
         )}
 

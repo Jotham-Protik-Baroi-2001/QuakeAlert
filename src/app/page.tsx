@@ -9,6 +9,7 @@ import Settings from '@/components/dashboard/settings';
 import type { UsgsEarthquakeResponse } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
+import { Country, countries } from '@/lib/countries';
 
 export const earthquakeFeedSources = [
   {
@@ -62,6 +63,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [feedSourceUrl, setFeedSourceUrl] = useState(earthquakeFeedSources[0].url);
+  const [selectedCountry, setSelectedCountry] = useState<Country | undefined>(undefined);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -80,6 +82,11 @@ export default function Home() {
 
     fetchData();
   }, [feedSourceUrl]);
+
+  const handleCountryChange = (countryName: string) => {
+    const country = countries.find(c => c.name === countryName);
+    setSelectedCountry(country);
+  };
 
   const renderContent = () => {
     if (isLoading) {
@@ -108,11 +115,14 @@ export default function Home() {
             <Settings
               currentFeedUrl={feedSourceUrl}
               onFeedSourceChange={setFeedSourceUrl}
+              selectedCountry={selectedCountry}
+              onCountryChange={handleCountryChange}
             />
           </div>
           <div className="flex flex-col gap-6">
             <LocationEnhancer
               earthquakeDataJSON={JSON.stringify(earthquakeData)}
+              selectedCountry={selectedCountry}
             />
             <EarthquakeFeed initialData={earthquakeData} />
           </div>
