@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, Activity, Server } from 'lucide-react';
+import { Zap, Activity, Database } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 const SENSOR_SENSITIVITY_MULTIPLIER = 10; 
@@ -180,7 +180,7 @@ export default function SensorStatus() {
            {isMonitoring && (
             <div className='flex items-center gap-2'>
               {isTremorDetected && <Zap className="h-6 w-6 text-destructive animate-ping" />}
-              {sensorMode === 'simulated' && <Server className="h-5 w-5 text-muted-foreground" title="Simulated Data" />}
+              {sensorMode === 'simulated' && <Database className="h-5 w-5 text-muted-foreground" title="Simulated Data" />}
             </div>
            )}
         </div>
