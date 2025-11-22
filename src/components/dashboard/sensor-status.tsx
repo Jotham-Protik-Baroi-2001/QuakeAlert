@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, Activity, Cpu } from 'lucide-react';
+import { Zap, Activity, Server } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 const SENSOR_THRESHOLD = 5; // m/s^2, a significant shake
@@ -172,7 +172,7 @@ export default function SensorStatus() {
            {isMonitoring && (
             <div className='flex items-center gap-2'>
               {isTremorDetected && <Zap className="h-6 w-6 text-destructive animate-ping" />}
-              {sensorMode === 'simulated' && <Cpu className="h-5 w-5 text-muted-foreground" title="Simulated Data" />}
+              {sensorMode === 'simulated' && <Server className="h-5 w-5 text-muted-foreground" title="Simulated Data" />}
             </div>
            )}
         </div>
