@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import type { UsgsEarthquakeResponse } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Rss, Globe, Building } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { TimeAgo } from "@/components/shared/time-ago";
 
 interface EarthquakeFeedProps {
   initialData: UsgsEarthquakeResponse;
@@ -18,19 +17,6 @@ const getMagnitudeVariant = (mag: number | null): "destructive" | "secondary" | 
     if (magnitude >= 2.5) return "secondary";
     return "default";
 };
-
-// Client-side component to prevent hydration mismatch
-const TimeAgo = ({ time }: { time: number | null }) => {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted || !time) {
-    return <span>Unknown time</span>;
-  }
-
-  return <span>{formatDistanceToNow(new Date(time), { addSuffix: true })}</span>;
-};
-
 
 export default function EarthquakeFeed({ initialData }: EarthquakeFeedProps) {
   const sortedFeatures = [...initialData.features].sort((a, b) => (b.properties.time || 0) - (a.properties.time || 0));
@@ -44,7 +30,7 @@ export default function EarthquakeFeed({ initialData }: EarthquakeFeedProps) {
               Real-time Earthquake Feed
             </CardTitle>
             <CardDescription>
-              Live data from USGS for the past hour.
+              Live data from the selected USGS feed.
             </CardDescription>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -87,7 +73,7 @@ export default function EarthquakeFeed({ initialData }: EarthquakeFeedProps) {
               ))
             ) : (
               <div className="flex items-center justify-center h-full pt-16">
-                <p className="text-center text-muted-foreground">No recent earthquakes in the past hour.</p>
+                <p className="text-center text-muted-foreground">No recent earthquakes in this feed.</p>
               </div>
             )}
           </div>

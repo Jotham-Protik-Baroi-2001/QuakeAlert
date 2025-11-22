@@ -1,18 +1,18 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getLocationEnrichedEarthquakeData, LocationEnrichedEarthquakeDataOutput } from '@/ai/flows/location-enriched-earthquake-data';
 import { MapPin, Loader2, Sparkles, Building, Globe } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { countries } from '@/lib/countries';
 import { Label } from '../ui/label';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { TimeAgo } from "@/components/shared/time-ago";
 
 interface LocationEnhancerProps {
   earthquakeDataJSON: string;
@@ -26,19 +26,6 @@ const getMagnitudeVariant = (mag: number | null): "destructive" | "secondary" | 
     if (magnitude >= 2.5) return "secondary";
     return "default";
 };
-
-// Client-side component to prevent hydration mismatch
-const TimeAgo = ({ time }: { time: number | null }) => {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted || !time) {
-    return <span>Unknown time</span>;
-  }
-
-  return <span>{formatDistanceToNow(new Date(time), { addSuffix: true })}</span>;
-};
-
 
 export default function LocationEnhancer({ earthquakeDataJSON }: LocationEnhancerProps) {
   const [isLoading, setIsLoading] = useState(false);
