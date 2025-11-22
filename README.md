@@ -8,6 +8,9 @@ QuakeAlert is a Next.js application that provides real-time earthquake detection
 - **Live Earthquake Feed:** Integrates with the USGS API to display real-time earthquake information from the last hour.
 - **Customizable Settings:** Allows configuration of sensor sensitivity and alert preferences.
 
+Deployed On:
+https://quake-alert-delta.vercel.app/
+
 ## Getting Started
 
 To get started, run the development server:
