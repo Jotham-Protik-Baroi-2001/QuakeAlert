@@ -10,6 +10,8 @@ import type { UsgsEarthquakeResponse } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Country, countries } from '@/lib/countries';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const earthquakeFeedSources = [
   {
