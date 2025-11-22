@@ -6,10 +6,17 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { SlidersHorizontal, Bell, Vibrate } from 'lucide-react';
+import { SlidersHorizontal, Bell, Vibrate, Rss } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { earthquakeFeedSources } from '@/app/page';
 
-export default function Settings() {
+interface SettingsProps {
+  currentFeedUrl: string;
+  onFeedSourceChange: (newUrl: string) => void;
+}
+
+export default function Settings({ currentFeedUrl, onFeedSourceChange }: SettingsProps) {
   const [sensitivity, setSensitivity] = useState(50);
   const { toast } = useToast();
 
@@ -20,6 +27,14 @@ export default function Settings() {
     });
   };
 
+  const handleFeedChange = (newUrl: string) => {
+    onFeedSourceChange(newUrl);
+    toast({
+        title: "Feed source updated",
+        description: "The earthquake feed has been updated to the new source."
+    })
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -27,9 +42,30 @@ export default function Settings() {
           <SlidersHorizontal className="h-6 w-6" />
           Configuration
         </CardTitle>
-        <CardDescription>Customize sensor sensitivity and alert notifications.</CardDescription>
+        <CardDescription>Customize sensors, data sources, and alert notifications.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className="space-y-4">
+          <Label htmlFor="feed-source" className="font-medium flex items-center gap-2">
+            <Rss className="h-5 w-5" />
+            Data Feed Source
+          </Label>
+          <Select value={currentFeedUrl} onValueChange={handleFeedChange}>
+            <SelectTrigger id="feed-source">
+              <SelectValue placeholder="Select a feed source" />
+            </SelectTrigger>
+            <SelectContent>
+              {earthquakeFeedSources.map(source => (
+                <SelectItem key={source.id} value={source.url}>
+                  {source.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Separator />
+      
         <div className="space-y-4">
           <Label htmlFor="sensitivity" className="font-medium">Detection Threshold</Label>
           <div className="flex items-center gap-4">
