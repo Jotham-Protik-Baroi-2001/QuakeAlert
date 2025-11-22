@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import type { UsgsEarthquakeResponse } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Rss, Globe, Building } from "lucide-react";
@@ -17,6 +18,19 @@ const getMagnitudeVariant = (mag: number | null): "destructive" | "secondary" | 
     if (magnitude >= 2.5) return "secondary";
     return "default";
 };
+
+// Client-side component to prevent hydration mismatch
+const TimeAgo = ({ time }: { time: number | null }) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted || !time) {
+    return <span>Unknown time</span>;
+  }
+
+  return <span>{formatDistanceToNow(new Date(time), { addSuffix: true })}</span>;
+};
+
 
 export default function EarthquakeFeed({ initialData }: EarthquakeFeedProps) {
   const sortedFeatures = [...initialData.features].sort((a, b) => (b.properties.time || 0) - (a.properties.time || 0));
@@ -58,7 +72,7 @@ export default function EarthquakeFeed({ initialData }: EarthquakeFeedProps) {
                   <div className="flex-grow min-w-0">
                     <p className="font-medium leading-tight truncate">{feature.properties.place || "Unknown location"}</p>
                     <p className="text-sm text-muted-foreground">
-                      {feature.properties.time ? formatDistanceToNow(new Date(feature.properties.time), { addSuffix: true }) : "Unknown time"}
+                      <TimeAgo time={feature.properties.time} />
                     </p>
                     {/* @ts-ignore */}
                     {feature.properties.proximity_to_user_km != null && (
